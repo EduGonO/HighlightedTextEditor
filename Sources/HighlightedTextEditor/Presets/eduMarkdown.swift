@@ -172,15 +172,21 @@ public var foregColor: Color {
     })
 }
 
+
 public var bgColor: Color = {
-    Color(uiColor: UIColor { trait in
-        switch trait.userInterfaceStyle {
-        case .dark:
-            return UIColor(hex: "#181c21")
-        default:
-            return UIColor(hex: "#F4F4F6")
-        }
-    })
+    if #available(iOS 15.0, *) {
+        Color(uiColor: UIColor { trait in
+            switch trait.userInterfaceStyle {
+            case .dark:
+                return UIColor(hex: "#181c21")
+            default:
+                return UIColor(hex: "#F4F4F6")
+            }
+        })
+    } else {
+        // Fallback on earlier versions
+        Color.white
+    }
 }()
 
 // ───────────────────────────────────────────────────────────────────

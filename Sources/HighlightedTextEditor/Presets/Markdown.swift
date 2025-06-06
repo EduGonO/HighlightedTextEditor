@@ -34,23 +34,23 @@ private let htmlRegex = try! NSRegularExpression(
 )
 
 #if os(macOS)
-let codeFont = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .thin)
-let headingTraits: NSFontDescriptor.SymbolicTraits = [.bold, .expanded]
-let boldTraits: NSFontDescriptor.SymbolicTraits = [.bold]
-let emphasisTraits: NSFontDescriptor.SymbolicTraits = [.italic]
-let boldEmphasisTraits: NSFontDescriptor.SymbolicTraits = [.bold, .italic]
-let secondaryBackground = NSColor.windowBackgroundColor
-let lighterColor = NSColor.lightGray
-let textColor = NSColor.labelColor
+// let codeFont = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .thin)
+// let headingTraits: NSFontDescriptor.SymbolicTraits = [.bold, .expanded]
+// let boldTraits: NSFontDescriptor.SymbolicTraits = [.bold]
+// let emphasisTraits: NSFontDescriptor.SymbolicTraits = [.italic]
+// let boldEmphasisTraits: NSFontDescriptor.SymbolicTraits = [.bold, .italic]
+// let secondaryBackground = NSColor.windowBackgroundColor
+// let lighterColor = NSColor.lightGray
+// let textColor = NSColor.labelColor
 #else
-let codeFont = UIFont.monospacedSystemFont(ofSize: UIFont.systemFontSize, weight: .thin)
-let headingTraits: UIFontDescriptor.SymbolicTraits = [.traitBold, .traitExpanded]
-let boldTraits: UIFontDescriptor.SymbolicTraits = [.traitBold]
-let emphasisTraits: UIFontDescriptor.SymbolicTraits = [.traitItalic]
-let boldEmphasisTraits: UIFontDescriptor.SymbolicTraits = [.traitBold, .traitItalic]
-let secondaryBackground = UIColor.secondarySystemBackground
-let lighterColor = UIColor.lightGray
-let textColor = UIColor.label
+// let codeFont = UIFont.monospacedSystemFont(ofSize: UIFont.systemFontSize, weight: .thin)
+// let headingTraits: UIFontDescriptor.SymbolicTraits = [.traitBold, .traitExpanded]
+// let boldTraits: UIFontDescriptor.SymbolicTraits = [.traitBold]
+// let emphasisTraits: UIFontDescriptor.SymbolicTraits = [.traitItalic]
+// let boldEmphasisTraits: UIFontDescriptor.SymbolicTraits = [.traitBold, .traitItalic]
+// let secondaryBackground = UIColor.secondarySystemBackground
+// let lighterColor = UIColor.lightGray
+// let textColor = UIColor.label
 #endif
 
 private let maxHeadingLevel = 6
