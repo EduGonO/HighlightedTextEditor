@@ -35,35 +35,51 @@ let defaultEditorTextColor = UIColor.label
 
 public struct TextFormattingRule {
     public typealias AttributedKeyCallback = (String, Range<String.Index>) -> Any
-
+    
     let key: NSAttributedString.Key?
     let calculateValue: AttributedKeyCallback?
     let fontTraits: SymbolicTraits
-
-    // ------------------- convenience ------------------------
-
-    public init(key: NSAttributedString.Key, value: Any) {
-        self.init(key: key, calculateValue: { _, _ in value }, fontTraits: [])
+    let group: Int?           // ← new: which capture group to style (nil = entire match)
+    
+    public init(
+        key: NSAttributedString.Key,
+        value: Any,
+        group: Int? = nil
+    ) {
+        self.key = key; self.calculateValue = { _,_ in value }
+        self.fontTraits = []
+        self.group = group
     }
-
-    public init(key: NSAttributedString.Key, calculateValue: @escaping AttributedKeyCallback) {
-        self.init(key: key, calculateValue: calculateValue, fontTraits: [])
+    
+    public init(
+        key: NSAttributedString.Key,
+        calculateValue: @escaping AttributedKeyCallback,
+        group: Int? = nil
+    ) {
+        self.key = key; self.calculateValue = calculateValue
+        self.fontTraits = []
+        self.group = group
     }
-
-    public init(fontTraits: SymbolicTraits) {
-        self.init(key: nil, fontTraits: fontTraits)
+    
+    public init(
+        fontTraits: SymbolicTraits,
+        group: Int? = nil
+    ) {
+        self.key = nil; self.calculateValue = nil
+        self.fontTraits = fontTraits
+        self.group = group
     }
-
-    // ------------------ most powerful initializer ------------------
-
+    
     init(
         key: NSAttributedString.Key? = nil,
         calculateValue: AttributedKeyCallback? = nil,
-        fontTraits: SymbolicTraits = []
+        fontTraits: SymbolicTraits = [],
+        group: Int? = nil
     ) {
         self.key = key
         self.calculateValue = calculateValue
         self.fontTraits = fontTraits
+        self.group = group
     }
 }
 
@@ -99,45 +115,56 @@ public typealias OnEditingChangedCallback = EmptyCallback
 public typealias OnTextChangeCallback = (_ editorContent: String) -> Void
 
 extension HighlightingTextEditor {
-    var placeholderFont: SystemColorAlias { SystemColorAlias() }
-
-    static func getHighlightedText(text: String, highlightRules: [HighlightRule]) -> NSMutableAttributedString {
-        let highlightedString = NSMutableAttributedString(string: text)
+    static func getHighlightedText(
+        text: String,
+        highlightRules: [HighlightRule]
+    ) -> NSMutableAttributedString {
+        let highlighted = NSMutableAttributedString(string: text)
         let all = NSRange(location: 0, length: text.utf16.count)
-
+        
         let editorFont = defaultEditorFont
         let editorTextColor = defaultEditorTextColor
-
-        highlightedString.addAttribute(.font, value: editorFont, range: all)
-        highlightedString.addAttribute(.foregroundColor, value: editorTextColor, range: all)
-
+        highlighted.addAttribute(.font, value: editorFont, range: all)
+        highlighted.addAttribute(.foregroundColor, value: editorTextColor, range: all)
+        
         highlightRules.forEach { rule in
             let matches = rule.pattern.matches(in: text, options: [], range: all)
             matches.forEach { match in
-                rule.formattingRules.forEach { formattingRule in
-
-                    var font = SystemFontAlias()
-                    highlightedString.enumerateAttributes(in: match.range, options: []) { attributes, _, _ in
-                        let fontAttribute = attributes.first { $0.key == .font }!
-                        // swiftlint:disable:next force_cast
-                        let previousFont = fontAttribute.value as! SystemFontAlias
-                        font = previousFont.with(formattingRule.fontTraits)
+                rule.formattingRules.forEach { fr in
+                    // determine which range to style:
+                    let targetRange: NSRange = {
+                        if let g = fr.group {
+                            return match.range(at: g)
+                        } else {
+                            return match.range
+                        }
+                    }()
+                    
+                    // 1) apply fontTraits if any:
+                    if fr.fontTraits.isEmpty == false {
+                        // grab existing font at start of targetRange:
+                        let prevFont = highlighted
+                            .attribute(.font, at: targetRange.location, effectiveRange: nil)
+                        as! SystemFontAlias
+                        let newDesc = prevFont.fontDescriptor
+                            .withSymbolicTraits(fr.fontTraits)
+                        let newFont = SystemFontAlias(
+                            descriptor: newDesc ?? prevFont.fontDescriptor,
+                            size: prevFont.pointSize
+                        )
+                        highlighted.addAttribute(.font, value: newFont, range: targetRange)
                     }
-                    highlightedString.addAttribute(.font, value: font, range: match.range)
-
-                    let matchRange = Range<String.Index>(match.range, in: text)!
-                    let matchContent = String(text[matchRange])
-                    guard let key = formattingRule.key,
-                          let calculateValue = formattingRule.calculateValue else { return }
-                    highlightedString.addAttribute(
-                        key,
-                        value: calculateValue(matchContent, matchRange),
-                        range: match.range
-                    )
+                    
+                    // 2) apply key/value or callback if provided:
+                    if let key = fr.key, let callback = fr.calculateValue {
+                        let subRange = Range<String.Index>(targetRange, in: text)!
+                        let substr = String(text[subRange])
+                        let value = callback(substr, subRange)
+                        highlighted.addAttribute(key, value: value, range: targetRange)
+                    }
                 }
             }
         }
-
-        return highlightedString
+        return highlighted
     }
 }

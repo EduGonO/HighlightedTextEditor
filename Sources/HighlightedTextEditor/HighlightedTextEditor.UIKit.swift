@@ -44,6 +44,11 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
     public func makeUIView(context: Context) -> UITextView {
         let textView = UITextView()
         textView.delegate = context.coordinator
+        textView.linkTextAttributes = [
+//            .foregroundColor: pinkColor,
+            .underlineStyle: 0
+        ]
+        
         updateTextViewModifiers(textView)
         runIntrospect(textView)
 
@@ -115,6 +120,34 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
         public func textViewDidEndEditing(_ textView: UITextView) {
             parent.onCommit?()
         }
+        // inside HighlightedTextEditor.UIKit.Coordinator:
+        public func textView(
+            _ textView: UITextView,
+            shouldInteractWith url: URL,
+            in characterRange: NSRange,
+            interaction: UITextItemInteraction
+        ) -> Bool {
+            guard url.scheme == "toggle" else { return true }
+            // convert NSRange→String.Index range:
+            if let strRange = Range(characterRange, in: parent.text) {
+                let current = parent.text[strRange]
+                let replacement = (current == "□") ? "☒" : "□"
+                parent.text.replaceSubrange(strRange, with: replacement)
+            }
+            return false
+        }
+//        private func textView(
+//            _ textView: UITextView,
+//            shouldInteractWith URL: URL,
+//            in textItem: UITextItem
+//        ) -> Bool {
+//            // same body--e.g.:
+//            if URL.scheme == "toggle" {
+//                // find 1-char range around textItem.range, flip "□"⇄"☒", etc.
+//                return false
+//            }
+//            return true
+//        }
     }
 }
 
