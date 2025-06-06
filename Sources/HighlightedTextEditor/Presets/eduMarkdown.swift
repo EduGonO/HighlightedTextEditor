@@ -446,7 +446,7 @@ let cashTagColor = UIColor { traits in
 private let maxHeadingLevel = 6
 
 public extension Sequence where Iterator.Element == HighlightRule {
-    static var markdown: [HighlightRule] {
+    static var edumarkdown: [HighlightRule] {
         [
             // heading rule
             HighlightRule(
